@@ -21,6 +21,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
@@ -38,6 +42,7 @@ public class Controller  implements ActionListener, ListSelectionListener{
     public Controller( SIGFrame frame) {
         this.frame = frame;
     }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -67,19 +72,29 @@ public class Controller  implements ActionListener, ListSelectionListener{
                 createLineOK();
                 break;
            
-                 case "Cancel":
-               Cancel();
+                 case "Delete Item":
+               deleteItem();
                 break;
-                 case "Save":
-               Save();
+                 case "Create New Item":
+                   createNewItem();
+               
+                break;
+            case "createLineCancel":
+                createLineCancel();
                 break;
         }
     }
  
-
+    /**
+     *
+     * @param e
+     */
     @Override
     public void valueChanged(ListSelectionEvent e) {
         int selectedIndex = frame.getInvoiceTable().getSelectedRow();
+        System.out.print(selectedIndex );
+//        int selectedRow = frame.getInvoiceTable().getSelectedRow();
+//        System.out.print(selectedRow);
         if (selectedIndex != -1) {
             System.out.println("You have selected row: " + selectedIndex);
             InvoiceData currentInvoice = frame.getInvoices().get(selectedIndex);
@@ -251,6 +266,7 @@ public class Controller  implements ActionListener, ListSelectionListener{
     }
 
     private void createLineOK() {
+    
         String item = lineDialog.getItemNameField().getText();
         String countStr = lineDialog.getItemCountField().getText();
         String priceStr = lineDialog.getItemPriceField().getText();
@@ -261,9 +277,9 @@ public class Controller  implements ActionListener, ListSelectionListener{
             InvoiceData invoice = frame.getInvoices().get(selectedInvoice);
             LineData line = new LineData(item, price, count, invoice);
             invoice.getLines().add(line);
-            LinesTable linesTable = (LinesTable) frame.getLineTable().getModel();
+            LinesTable linesTableModel = (LinesTable) frame.getLineTable().getModel();
             //linesTableModel.getLines().add(line);
-            linesTable.fireTableDataChanged();
+            linesTableModel.fireTableDataChanged();
             frame.getInvoicesTable().fireTableDataChanged();
         }
         lineDialog.setVisible(false);
@@ -272,54 +288,40 @@ public class Controller  implements ActionListener, ListSelectionListener{
     }
 
   
-     private void Cancel() {
-       // invoiceDialog.setVisible(false);
-        invoiceDialog.dispose();
-       // invoiceDialog = null;
-        System.out.print("No Updates");
+    
+
+    private void createNewItem() {
+     lineDialog = new LineInterface(frame);
+        lineDialog.setVisible(true);
+         
+
     }
 
-    private void Save() {
-     ArrayList<InvoiceData> invoices = frame.getInvoices();
-        String headers = "";
-        String lines = "";
-        for (InvoiceData invoice : invoices) {
-            String invCSV = invoice.getAsCSV();
-            headers += invCSV;
-            headers += "\n";
+    private void deleteItem() {
+    
+     int selectedRow = frame.getLineTable().getSelectedRow();
 
-            for (LineData line : invoice.getLines()) {
-                String lineCSV = line.getAsCSV();
-                lines += lineCSV;
-                lines += "\n";
-            }
-        }
-        System.out.println("Check point");
-        try {
-            JFileChooser fc = new JFileChooser();
-            int result = fc.showSaveDialog(frame);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                File headerFile = fc.getSelectedFile();
-                FileWriter hfw = new FileWriter(headerFile);
-                hfw.write(headers);
-                hfw.flush();
-                hfw.close();
-                result = fc.showSaveDialog(frame);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    File lineFile = fc.getSelectedFile();
-                    FileWriter lfw = new FileWriter(lineFile);
-                    lfw.write(lines);
-                    lfw.flush();
-                    lfw.close();
-                }
-            }
-        } catch (Exception ex) {
-
+        if (selectedRow != -1) {
+            LinesTable linesTableModel = (LinesTable) frame.getLineTable().getModel();
+            linesTableModel.getLines().remove(selectedRow);
+            linesTableModel.fireTableDataChanged();
+            frame.getInvoicesTable().fireTableDataChanged();
         }
     }
 
+    private void createLineCancel() {
+    
+          lineDialog.setVisible(false);
+        lineDialog.dispose();
+        lineDialog = null;
+    
+    }
 
    
+   
+   
+
+    
     
     
 }
